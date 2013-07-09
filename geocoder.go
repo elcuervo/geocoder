@@ -8,12 +8,13 @@ import (
 )
 
 type Coordinates struct {
-	Lat, Lng float64
+        Lat float64 `json:"lat"`
+        Lng float64 `json:"lng"`
 }
 
-type City struct {
-	Name        string
-	Coordinates Coordinates
+type Location struct {
+	Name        string      `json:"name"`
+	Coordinates Coordinates `json:"coordinates"`
 }
 
 type Response struct {
@@ -27,7 +28,7 @@ type Result struct {
 }
 
 type Address struct {
-	Name  string `json:"long_name"`
+	Name  string    `json:"long_name"`
 	Types []string
 }
 
@@ -37,20 +38,18 @@ type Geometry struct {
 
 const api = "http://maps.googleapis.com/maps/api/geocode/json"
 
-type Geocoder struct{}
-
-func (g *Geocoder) City(address string) (*City, error) {
+func City(address string) (*Location, error) {
 	safe_address := url.QueryEscape(address)
 	uri := fmt.Sprintf("%s?sensor=false&address=%s", api, safe_address)
-	return g.fetch(uri)
+	return fetch(uri)
 }
 
-func (g *Geocoder) Coords(lat float64, lng float64) (*City, error) {
+func Coords(lat float64, lng float64) (*Location, error) {
 	uri := fmt.Sprintf("%s?sensor=false&latlng=%f,%f", api, lat, lng)
-	return g.fetch(uri)
+	return fetch(uri)
 }
 
-func (g *Geocoder) possibleCityName(results []*Result) string {
+func possibleCityName(results []*Result) string {
 	types := []string{
 		"locality",
 		"sublocality",
@@ -72,7 +71,7 @@ func (g *Geocoder) possibleCityName(results []*Result) string {
 	return ""
 }
 
-func (g *Geocoder) fetch(uri string) (*City, error) {
+func fetch(uri string) (*Location, error) {
 	data, err := http.Get(uri)
 
 	if err != nil {
@@ -88,8 +87,8 @@ func (g *Geocoder) fetch(uri string) (*City, error) {
 		panic(err)
 	}
 
-	city := &City{
-		g.possibleCityName(res.Results),
+	city := &Location{
+		possibleCityName(res.Results),
 		res.Results[0].Geometry.Location}
 
 	return city, nil
