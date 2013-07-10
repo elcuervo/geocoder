@@ -8,12 +8,13 @@ import (
 )
 
 type Coordinates struct {
-        Lat float64 `json:"lat"`
-        Lng float64 `json:"lng"`
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
 }
 
 type Location struct {
 	Name        string      `json:"name"`
+	Address     string      `json:"address"`
 	Coordinates Coordinates `json:"coordinates"`
 }
 
@@ -23,12 +24,13 @@ type Response struct {
 }
 
 type Result struct {
-	Addresses []*Address `json:"address_components"`
-	Geometry  Geometry
+	Addresses        []*Address `json:"address_components"`
+	FormattedAddress string     `json:"formatted_address"`
+	Geometry         Geometry
 }
 
 type Address struct {
-	Name  string    `json:"long_name"`
+	Name  string `json:"long_name"`
 	Types []string
 }
 
@@ -49,26 +51,27 @@ func Coords(lat float64, lng float64) (*Location, error) {
 	return fetch(uri)
 }
 
-func possibleCityName(results []*Result) string {
+func possibleCityName(results []*Result) (string, string) {
 	types := []string{
 		"locality",
 		"sublocality",
 		"administrative_area_level_3",
-		"administrative_area_level_2"}
+		"administrative_area_level_2",
+		"administrative_area_level_1"}
 
 	for _, possible := range types {
 		for _, result := range results {
 			for _, address := range result.Addresses {
 				for _, city_type := range address.Types {
 					if possible == city_type {
-					        return address.Name
+						return address.Name, result.FormattedAddress
 					}
 				}
 			}
 		}
 	}
 
-	return ""
+	return "Unknown", "Unknown"
 }
 
 func fetch(uri string) (*Location, error) {
@@ -87,9 +90,12 @@ func fetch(uri string) (*Location, error) {
 		panic(err)
 	}
 
+	city_name, address := possibleCityName(res.Results)
+
 	city := &Location{
-		possibleCityName(res.Results),
-		res.Results[0].Geometry.Location}
+		Name:        city_name,
+		Address:     address,
+		Coordinates: res.Results[0].Geometry.Location}
 
 	return city, nil
 }
