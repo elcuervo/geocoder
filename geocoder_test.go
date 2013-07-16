@@ -39,3 +39,10 @@ func TestPossibleCityName(t *testing.T) {
 	assert.NotNil(city.Name, "Missing city name")
 	assert.Equal(city.Name, "Colonia", "Wrong city name")
 }
+
+func TestNonExistentCity(t *testing.T) {
+	assert := asserts.NewTestingAsserts(t, true)
+
+	_, err := City("Balsd234")
+	assert.NotNil(err, "Should Fail")
+}

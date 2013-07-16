@@ -2,6 +2,7 @@ package geocoder
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -71,7 +72,7 @@ func possibleCityName(results []*Result) (string, string) {
 		}
 	}
 
-	return "Unknown", "Unknown"
+	return "", ""
 }
 
 func fetch(uri string) (*Location, error) {
@@ -92,10 +93,15 @@ func fetch(uri string) (*Location, error) {
 
 	city_name, address := possibleCityName(res.Results)
 
+	if city_name == "" {
+		return nil, errors.New("City not found")
+	}
+
 	city := &Location{
 		Name:        city_name,
 		Address:     address,
 		Coordinates: res.Results[0].Geometry.Location}
 
 	return city, nil
+
 }
