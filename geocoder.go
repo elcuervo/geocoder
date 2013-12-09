@@ -16,6 +16,7 @@ type Coordinates struct {
 type Location struct {
 	Name        string      `json:"name"`
 	Address     string      `json:"address"`
+	Country     string      `json:"country"`
 	Coordinates Coordinates `json:"coordinates"`
 }
 
@@ -52,8 +53,16 @@ func Coords(lat float64, lng float64) (*Location, error) {
 	return fetch(uri)
 }
 
-func possibleCityName(results []*Result) (string, string) {
+type ReducedCity struct {
+	Name    string
+	Address string
+	Country string
+}
+
+func possibleCityName(results []*Result) *ReducedCity {
+	city := new(ReducedCity)
 	types := []string{
+		"country",
 		"locality",
 		"sublocality",
 		"administrative_area_level_3",
@@ -62,20 +71,26 @@ func possibleCityName(results []*Result) (string, string) {
 
 	for _, possible := range types {
 		for _, result := range results {
-			for _, address := range result.Addresses {
-				for _, city_type := range address.Types {
+			for _, current_address := range result.Addresses {
+				for _, city_type := range current_address.Types {
 					if possible == city_type {
-						return address.Name, result.FormattedAddress
+						if possible == "country" {
+							city.Country = current_address.Name
+						} else if city.Name == "" {
+							city.Address = result.FormattedAddress
+							city.Name = current_address.Name
+						}
 					}
 				}
 			}
 		}
 	}
 
-	return "", ""
+	return city
 }
 
 func fetch(uri string) (*Location, error) {
+	fmt.Print(uri + "\n")
 	data, err := http.Get(uri)
 
 	if err != nil {
@@ -91,17 +106,18 @@ func fetch(uri string) (*Location, error) {
 		panic(err)
 	}
 
-	city_name, address := possibleCityName(res.Results)
+	city := possibleCityName(res.Results)
 
-	if city_name == "" {
+	if city.Name == "" {
 		return nil, errors.New("City not found")
 	}
 
-	city := &Location{
-		Name:        city_name,
-		Address:     address,
+	out := &Location{
+		Name:        city.Name,
+		Address:     city.Address,
+		Country:     city.Country,
 		Coordinates: res.Results[0].Geometry.Location}
 
-	return city, nil
+	return out, nil
 
 }
