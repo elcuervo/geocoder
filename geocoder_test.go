@@ -21,9 +21,9 @@ func TestCoords(t *testing.T) {
 	assert := asserts.NewTestingAsserts(t, true)
 	city, err := Coords(-34.905944, -56.191556)
 
-        t.Log(city)
+	t.Log(city)
 	if err != nil {
-                t.Errorf("Not able to geocode:", err)
+		t.Errorf("Not able to geocode:", err)
 	}
 
 	assert.Equal(city.Name, "Montevideo", "Unexpected coordinates for Montevideo")

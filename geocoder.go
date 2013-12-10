@@ -33,6 +33,7 @@ type Result struct {
 
 type Address struct {
 	Name  string `json:"long_name"`
+	Code string `json:"short_name"`
 	Types []string
 }
 
@@ -75,7 +76,7 @@ func possibleCityName(results []*Result) *ReducedCity {
 				for _, city_type := range current_address.Types {
 					if possible == city_type {
 						if possible == "country" {
-							city.Country = current_address.Name
+							city.Country = current_address.Code
 						} else if city.Name == "" {
 							city.Address = result.FormattedAddress
 							city.Name = current_address.Name
